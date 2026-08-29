@@ -112,9 +112,9 @@ Ask whether to push. Act only on **explicit confirmation**; never auto-push.
 - `list_id` - `<team-list-id>` (the team task list, the default)
 - `assignees` - `["<member-id>"]`
 
-**Assignee is always the analyst**, by numeric ID. Do not use `["me"]`: this MCP silently ignores
-it on create and leaves the task unassigned. Never assign by name if the name carries an accent,
-it breaks lookup. After creating, verify the assignee took; if empty, re-apply with
+**Assignee is always the analyst**, by numeric ID. Do not use `["me"]`: this MCP ignores it on
+create and leaves the task unassigned, with no error. Never assign by name if the name carries an
+accent, it breaks lookup. After creating, verify the assignee took; if empty, re-apply with
 `clickup_update_task`, which resolves reliably.
 
 For a different list, resolve it via `clickup_get_list` or `clickup_get_workspace_hierarchy`.

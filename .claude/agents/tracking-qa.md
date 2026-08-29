@@ -85,7 +85,7 @@ Work through these for every surface in the spec. Each is a possible FAIL.
   events: a `card_impression` followed by a `form_submit` carries the card context into the form
   event. Verify the reset is actually there, in order, in the `dataLayer`.
 - The event carries **exactly** the spec'd params. Extras are a failure, not a bonus: a build-added
-  `banner_location` was rejected for precisely this reason. Silent extras drift into inconsistency.
+  `banner_location` was rejected for this reason. Extras drift into inconsistency.
 - Every value sits inside the controlled vocabulary. An empty string is not a valid
   `source_surface`.
 - Params land in the type the spec says. Report which of `string_value` / `int_value` the value

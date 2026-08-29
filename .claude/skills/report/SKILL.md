@@ -54,7 +54,7 @@ Preflight runs in both modes, **before any BigQuery touch**:
   - The shell exports `GOOGLE_APPLICATION_CREDENTIALS` pointing at a service account key that is
     for the GA4 Data API only and has no `bigquery.jobs.create`, so if it reaches the BigQuery
     client every query 403s. Always run with the var unset.
-  - The user ADC file can silently hold the personal account after any re-login.
+  - The user ADC file can still hold the personal account after any re-login.
 - Verify empirically with a free dry-run canary:
 
   ```
@@ -181,8 +181,8 @@ These are the rules the analyst has corrected before. Apply them while writing, 
 - Then check the page against the brand and content rules above: `{@partial "brand.md"}` right
   under the frontmatter, no second `<style>` block, explicit chart colours from the palette, the
   `.meta` Window and Source line under the title, a one-to-two-sentence TL;DR, an Outline on
-  anything longer than a one-pager. Flag violations at the checkpoint. Do not silently rewrite an
-  existing report's copy.
+  anything longer than a one-pager. Flag violations at the checkpoint. Do not rewrite an
+  existing report's copy on your own.
 
 ### 3 - UX and data-viz pass
 

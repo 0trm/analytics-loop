@@ -1,6 +1,6 @@
 ---
 name: capture
-description: Distil what this session learned into memory, before the task is considered done. Use at the end of any piece of analytics work, or when something non-obvious was discovered that would cost time to rediscover. Enforces the tier rule so memory stays small - durable facts get routed to docs/ instead of quietly inflating the always-on index.
+description: Distil what this session learned into memory, before the task is considered done. Use at the end of any piece of analytics work, or when something non-obvious was discovered that would cost time to rediscover. Enforces the tier rule so memory stays small - durable facts get routed to docs/ instead of inflating the always-on index.
 argument-hint: [optional focus, e.g. "just the BigQuery gotchas"; omit to review the whole session]
 user-invocable: true
 ---
@@ -41,7 +41,7 @@ Not candidates:
 | Destination | When | Action |
 |---|---|---|
 | `docs/` | Durable platform truth, team-relevant, slow to change | Note it for `/promote`. Do not write it to memory. |
-| `CLAUDE.md` | It silently produces wrong answers and applies to nearly every task | Propose the one-line edit to the analyst. Rare. |
+| `CLAUDE.md` | It produces wrong answers with no error, and applies to nearly every task | Propose the one-line edit to the analyst. Rare. |
 | a skill | It is a procedure, or a rule governing one | Propose the edit to that skill. |
 | memory | Volatile private state: a live outage, an in-flight decision, a personal preference | Write it, per step 3. |
 | nothing | It is already recorded, or will not matter again | Say so and drop it. |

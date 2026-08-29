@@ -28,7 +28,7 @@ evidence; one route re-read twice is not.
 ## Checklist
 
 **Read the Traps section of `CLAUDE.md` at the repo root first.** It is the single source for the
-known ways a number goes silently wrong here, and each one is a thing you are checking for. The
+known ways a number comes back wrong here, and each one is a thing you are checking for. The
 list below is how you check, not a second copy of what to check.
 
 Every item is a possible FAIL, not a suggestion.

@@ -19,7 +19,7 @@ TIMEOUT=""
 command -v gtimeout >/dev/null 2>&1 && TIMEOUT="gtimeout 10"
 command -v timeout  >/dev/null 2>&1 && TIMEOUT="timeout 10"
 
-# bq ls lists lexicographically and truncates silently at max_results, so keep
+# bq ls lists lexicographically and truncates at max_results with no warning, so keep
 # the cap far above any plausible shard count or the newest shard falls off.
 LATEST=$(
   $TIMEOUT bq --project_id="$PROJECT" ls --max_results=10000 "$DATASET" 2>/dev/null |

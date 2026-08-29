@@ -41,8 +41,8 @@ These return a plausible number that is wrong. Check them before trusting any re
   (verified 2026-07-30: `events_20260729` complete); it can still be D-2 early in the day, so
   check rather than assume. The derived `analytics_reports.*` tables are built from it and lag a
   further day, at **D-2** (`traffic_section_daily` stopped at 2026-07-28 on 2026-07-30). A report
-  on a derived table will happily show a date control ending yesterday while the data stops the
-  day before, silently dropping a day.
+  on a derived table shows a date control ending yesterday while the data stops the day before, so
+  the last day of the range comes back empty and the total is short a day.
 - **Param value types.** A param may sit in `string_value`, `int_value` or `double_value`.
   Check all three before concluding it is missing.
 - **`form_submit` over-fires ~8x.** Count distinct sessions, never raw events.

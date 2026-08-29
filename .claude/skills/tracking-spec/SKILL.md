@@ -61,9 +61,9 @@ guessing.
 
 ## D2 - Reuse check, before anything else
 
-**Run this first, every time.** It is the single biggest time saver in the pipeline. Very often the
-frontend just needs to push an existing event on a new surface, and **no GTM change is needed at
-all** - a promo banner reused `banner_impression` / `banner_click` with zero container work.
+**Run this first, every time.** Very often the frontend only needs to push an existing event on a
+new surface, and **no GTM change is needed at all** - a promo banner reused `banner_impression` /
+`banner_click` with zero container work.
 
 ```bash
 cd "$(git rev-parse --show-toplevel)"
@@ -239,7 +239,7 @@ supersedes any provisional event names in the design doc.>
 ## Action items             <- checkbox list, each prefixed **dev** or **gtm-admin**
 ```
 
-The section detail is where the spec earns its keep: a screenshot per tracked element, the exact
+The section detail is what the dev team builds from: a screenshot per tracked element, the exact
 `data-gtm-*` hooks, and a dedup rule wherever two elements could fire on one click ("the card-click
 handler must ignore clicks that originate on the outbound link").
 
@@ -289,7 +289,7 @@ Only these four. The write scripts in the same directory are out of scope here.
 Fill into the spec: the real **Trigger ID**, trigger name, tag name and **tagId**, and the `DLV - *`
 variable names each param reads from. Replace every `TBD` you can resolve; leave the rest as `TBD`.
 
-API gotchas, so a read does not silently mislead: returned `path` values are relative (prefix
+API gotchas, so a read does not mislead: returned `path` values are relative (prefix
 `https://tagmanager.googleapis.com/tagmanager/v2/`); GA4 event tags carry their params in an
 `eventSettingsTable` list of `{parameter, parameterValue}` maps, not as top-level fields.
 
@@ -377,7 +377,7 @@ The checklist:
 - [ ] Fires **before** any cross-domain redirect or navigation.
 - [ ] The state-reset push precedes every event push.
 - [ ] The event carries **exactly** the spec'd params - no missing ones, and **no extras**.
-      Silent extras drift into inconsistency and are as much a failure as a missing param.
+      Extras drift into inconsistency and are as much a failure as a missing param.
 - [ ] Every value is inside its controlled vocabulary (`source_surface`, `form_type`, `cta_id`).
 - [ ] Fires exactly once per action. No double-count where two elements overlap.
 - [ ] For forms: fires on server-confirmed success only, never on validation error or a 4xx/5xx.
@@ -443,9 +443,9 @@ Run at D-2 or later. Four things this query does that a naive one does not:
   `form_name` regression sat at 4.2% and read as "present");
 - coalesces **`string_value`, `int_value` and `double_value`** before concluding a param is missing;
 - applies the **standing spam exclusion** via the canonical view, with **`NOT EXISTS`, never
-  `NOT IN`** - a single NULL session id on either side of a `NOT IN` silently empties the result
-  or leaks rows, and during post-ship verification an empty result reads exactly like "the event
-  never fired".
+  `NOT IN`** - a single NULL session id on either side of a `NOT IN` empties the result or leaks
+  rows with no error, and during post-ship verification an empty result reads exactly like "the
+  event never fired".
 
 ```sql
 WITH ev AS (

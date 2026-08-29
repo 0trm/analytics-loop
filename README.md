@@ -62,7 +62,7 @@ fact still holds, folds it into `docs/`, and opens a PR. After the merge the mem
 deleted; two copies of one fact drift. The PR is also the privacy boundary, the only route from one
 person's private memory into the shared repo, and it passes human review.
 
-Each week's sessions start from a richer baseline than the last. That is the compounding.
+Each week's sessions start from a richer baseline than the last.
 
 ---
 
