@@ -71,7 +71,44 @@ These return a plausible number that is wrong. Check them before trusting any re
 - Git: commit routine work straight to `main`; branch and open a PR when the diff should be
   reviewed in the GitHub UI. Always `pull` before branching. "Delete the repo" means the local
   clone, never the remote.
-- Writing: en dashes, never em dashes. No decorative emoji. Plain language, and strip anything
-  that does not carry signal.
+- Writing: en dashes, never em dashes. No decorative emoji. Anything a peer reads follows
+  **Writing for peers** below.
 - Simplest working solution.
 - Never commit credentials. This repo is visible to the whole organisation.
+
+## Writing for peers
+
+Peers are colleagues at the startup, nearly all non-technical. They read the first line, maybe
+the last, and act on that. These rules cover everything they read: report pages and PDFs, task
+bodies and comments, clarifying questions, PR bodies. Skills point here rather than repeat them.
+
+**Shape**
+
+- Lead with the answer: the finding and the one number that matters.
+- End with one next action: who does what.
+- At most 5 bullets in a list. Number steps, one action each.
+- No preamble, recap, closing offer or side notes.
+
+**Words**
+
+- Plain words. No table, column, event or parameter names, no SQL, no GA4 or GTM terms. If a
+  term is unavoidable (CTR, session), define it in one line the first time.
+- Flat and declarative. No hype adjectives, bold drama or dramatic adverbs. Say what happens:
+  "returns 0 instead of null".
+
+**Leave out**
+
+- The author, a "prepared by" line, and any QA or "certified" label. QA still runs; its result
+  goes to the analyst in chat, never on the page.
+- Caveats beyond three. Keep only the ones that change how a reader uses the number, one plain
+  sentence each, under "What this cannot tell you". The rest go to the analyst in chat.
+
+**PR bodies:** one or two sentences on what changed and why, then at most three one-line bullets,
+under 100 words. Detail a reviewer needs goes in a collapsed `<details>` block, never the body.
+Keep the "Generated with Claude Code" line.
+
+**Check before sending:** reading only the first and last lines, a non-technical reader knows the
+finding and what to do next.
+
+Progress lines ("step 3 of 5 done") and the two-minute next action are for chat with the analyst,
+not for pages. A report ends on its recommendation, a ticket on its next step.

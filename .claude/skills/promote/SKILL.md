@@ -7,44 +7,34 @@ user-invocable: true
 
 # promote
 
-The second half of the pipeline's compounding phase (step 13 of its full numbering), and the
-only mechanism by which private knowledge becomes team knowledge. Run it weekly.
-
-Memory is fast and private. `docs/` is durable, reviewable, and read by teammates. Facts that have
-proven themselves in memory belong in `docs/`, and the pull request is the moment that transition
-is made deliberately rather than by accident.
+The only route from private memory into team-visible `docs/`, as a reviewable pull request. Run
+it weekly.
 
 ## 1 - Survey memory
 
-Read the memory index, then read in full every entry that is a candidate. Do not judge from the
-index line - it is a hook, not the fact.
+Read the memory index, then every candidate entry in full; the index line is a hook, not the fact.
+Promote an entry only when **all four** hold:
 
-An entry is ready to promote when **all** of these hold:
+- **Durable.** Still true in six months. Live outages and in-flight decisions are not.
+- **Team-relevant.** A teammate on the same surface would need it. Personal preferences never
+  promote.
+- **Verified.** It has held up against reality, not been asserted once. Verify it now or leave it.
+- **Safe.** No credentials, tokens, key paths, passwords or personal detail. The repo is
+  company-visible; when in doubt it stays in memory.
 
-- **Durable.** It will still be true in six months. Live outages and in-flight decisions are not
-  ready; they may never be.
-- **Team-relevant.** A teammate hitting the same surface would need it. Personal working
-  preferences never promote.
-- **Verified.** It has survived contact with reality, not just been asserted once. If you cannot
-  confirm it still holds, verify it now or leave it.
-- **Safe.** No credentials, tokens, key paths, passwords or personal detail. This repo is
-  company-visible. When in doubt it stays in memory.
+## 2 - Verify each candidate
 
-## 2 - Verify before promoting
+A stale fact in `docs/` does more harm than one in memory, because the team trusts it.
 
-Promoting a stale fact into `docs/` is worse than leaving it in memory, because the team will
-trust it. For each candidate:
+- A file or path: confirm it exists.
+- Data behaviour: one cheap BigQuery query.
+- Platform config: confirm in GTM or GA4.
 
-- If it names a file or path, confirm it exists.
-- If it describes data behaviour, re-check it against BigQuery. One cheap query.
-- If it describes a platform config, confirm in GTM or GA4.
-
-Anything that fails verification gets **corrected or deleted**, not promoted.
+A candidate that fails is **corrected or deleted**, never promoted.
 
 ## 3 - Find its home
 
-Fold into an existing file wherever possible. A new file is a last resort - the docs tree is
-already navigable and every new file makes it less so.
+Fold into an existing file; a new file is a last resort.
 
 | Kind of fact | Home |
 |---|---|
@@ -58,9 +48,8 @@ already navigable and every new file makes it less so.
 | How a dashboard is built and read | `docs/dashboards/` |
 | How work flows end to end | `docs/sop/` |
 
-Match the house style of the file you are editing: same heading depth, same table conventions,
-same tone. A promoted fact should be indistinguishable from the surrounding text. Rewrite the
-memory phrasing - memory is written for one reader, docs are written for the team.
+Match the file's heading depth, table conventions and tone, so the fact reads like the text
+around it. Rewrite the memory phrasing: memory is written for one reader, docs for the team.
 
 ## 4 - Open the pull request
 
@@ -73,29 +62,26 @@ git commit
 gh pr create
 ```
 
-Pull `main` first, every time, without exception. It avoids conflicts and avoids resurrecting
-files that were deleted directly on `main`.
+Pull `main` first, every time; it avoids conflicts and resurrecting files deleted on `main`.
 
-The PR body states, per promoted fact: what it is, where it came from, and how it was verified in
-step 2. A reviewer should be able to check the claim without rerunning the investigation.
+The PR body follows the PR rule in **Writing for peers** (repo `CLAUDE.md`). The visible part says,
+in plain words, what the team now knows, with one bullet per file. The per-fact detail goes in a
+collapsed `<details>` block: where each fact came from and how step 2 verified it, so a reviewer
+can check it without rerunning the work.
 
-Keep the PR small. One week of promotions is a handful of facts. A fifty-file PR is not a
-promotion, it is a migration, and it will not be reviewed properly.
+Keep it small. A week is a handful of facts; a fifty-file PR is a migration and will not be
+reviewed properly.
 
 ## 5 - Delete the memory copies
 
-**Only after the PR merges.** Then remove each promoted entry from memory and its line from the
-index.
-
-This step is not optional. Leaving both copies is exactly the duplication this architecture was
-built to remove: two records of one fact, no sync, and whichever one is edited makes the other a
-lie. The `docs/` copy is now the source of truth.
+**Only after the PR merges**, remove each promoted entry and its index line. This is not
+optional: two unsynced copies of one fact mean whichever is edited makes the other wrong. The
+`docs/` copy is now the source of truth.
 
 ## 6 - Report
 
-- What was promoted, and into which file.
-- How each fact was verified.
-- What was deliberately held back, and why: not durable, not team-relevant, unverifiable, or
-  sensitive.
-- What was deleted from memory outright rather than promoted.
-- The memory index count before and after.
+1. What was promoted, and into which file.
+2. How each fact was verified.
+3. What was held back, and why: not durable, not team-relevant, unverifiable, or sensitive.
+4. What was deleted from memory outright.
+5. The memory index count before and after.

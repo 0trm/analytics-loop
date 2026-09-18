@@ -7,47 +7,48 @@ user-invocable: true
 
 # tracking-spec
 
-The tracking pipeline, end to end: **define, spec, build, QA, ship**. It is the executable form of
-`docs/sop/tracking-implementation.md`.
+The executable form of `docs/sop/tracking-implementation.md`: **define, spec, build, QA, ship**.
 
-Two facts shape everything below. First, the container runs a clean **dataLayer event model**: the
-legacy DOM/click-listener tags were deleted in the dataLayer migration, so every custom event now
-depends on a real frontend push. A missing push means **zero events, not degraded events**, and
-there is no scraping shortcut to recover them. Second, **analytics and the dev team own different
-halves** of the implementation, and they finish days apart. Hence five modes rather than one
-script.
+Two facts shape it. The container runs a pure **dataLayer event model** (the DOM listener tags
+were deleted in the dataLayer migration), so a missing frontend push means **zero events**, with
+no scraping fallback. And **analytics and the dev team own different halves**, finishing days
+apart, hence five modes.
 
 ## 0 - Pick the mode
 
 | Mode | Runs when | Produces |
 |---|---|---|
-| `define` | a request arrives, or a redesign needs instrumentation | the reuse verdict, candidate KPI rows, a stop at the KPI gate |
-| `spec` | the gate is passed and the event set is agreed | two documents: the tracking-plan page and the dev handoff spec |
-| `build` | the spec is signed off and container work is due | real trigger/tag/variable ids, plus the container checklist |
-| `qa` | dev has deployed to staging, or the build has reached prod | a `tracking-qa` run against the live surface, and its PASS/FAIL verdict |
-| `ship` | staging QA passed and prod is deployed | publish checklist, BigQuery verification query, closeout, doc updates |
+| `define` | a request or redesign arrives | reuse verdict, candidate KPI rows, a stop at the KPI gate |
+| `spec` | the gate is passed, the event set agreed | the tracking-plan page and the dev handoff spec |
+| `build` | the spec is signed off | real trigger/tag/variable ids, the container checklist |
+| `qa` | dev deployed to staging, or the build reached prod | a `tracking-qa` run and its PASS/FAIL |
+| `ship` | staging QA passed, prod deployed | publish checklist, BigQuery check, closeout, doc updates |
 
-Default to the mode the input implies:
+Infer it from the input: a stakeholder ask or Figma link -> define; an agreed event name, "write
+the spec" -> spec; trigger ids, "build the container side" -> build; a staging URL, "did it land
+in prod" -> qa; "it passed", "publish", a closeout -> ship.
 
-- A stakeholder ask, a Figma link, a redesign task, "can we measure X" goes to **define**.
-- An agreed event name and a surface, or "write the spec", goes to **spec**.
-- "What are the trigger ids", "build the container side", a workspace question goes to **build**.
-- A staging URL, "it's on staging", "verify the push", "did it land in prod" goes to **qa**.
-- "It passed", a merge notification, "publish", a closeout request goes to **ship**.
+State the mode in one line before doing anything. If the input spans two, run the earlier one
+and say what the next needs.
 
-State the mode you picked in one line before doing anything. If the input spans two modes, run the
-earlier one and say what the next one needs.
+## Read first, every mode
 
-## Read these first, in every mode
-
-| Source | What it settles |
+| Source | Settles |
 |---|---|
-| `docs/config/conventions.md` | naming rules, `source_surface`, DOM hooks, the state-reset push |
-| `docs/dev/tracking-plan/README.md` | the live custom events and the auto-collected ones |
-| `docs/dev/tracking-plan/<event>.md` | the canonical contract for any event already in play |
+| `docs/config/conventions.md` | naming, the controlled vocabularies, DOM hooks, the state-reset push |
+| `docs/dev/tracking-plan/README.md` | the live custom and auto-collected events |
+| `docs/dev/tracking-plan/<event>.md` | the contract for any event already in play |
 | `docs/business/key-performance-indicators.md` | what the KPI gate resolves against |
 | `docs/config/gtm.md` | container facts, API access, versioning |
 | `docs/config/ga4.md` | custom-dimension slots and what is registered |
+
+## Who reads what
+
+Specs, tracking-plan pages and closeouts are for developers and analysts, so they stay technical.
+One exception: **the first line of every spec and closeout is plain words** for a non-technical
+reader, saying what is tracked and whether the dev team is blocked (**Writing for peers** in the
+repo `CLAUDE.md`). Anything sent back to a requester, such as a KPI-gate "sharpen or drop", follows
+the same section.
 
 ---
 
@@ -55,15 +56,13 @@ earlier one and say what the next one needs.
 
 ## D1 - Restate the request
 
-One sentence: which interaction, on which surface, and what the requester wants to learn from it.
-If the restatement is already vague, that is the finding. Send it to `/clarify` rather than
-guessing.
+One sentence: which interaction, on which surface, and what the requester wants to learn. If the
+restatement is vague, send it to `/clarify` rather than guessing.
 
-## D2 - Reuse check, before anything else
+## D2 - Reuse check, first, every time
 
-**Run this first, every time.** Very often the frontend only needs to push an existing event on a
-new surface, and **no GTM change is needed at all** - a promo banner reused `banner_impression` /
-`banner_click` with zero container work.
+Often the frontend only needs to push an existing event on a new surface, with **no GTM change**
+(a promo banner reused `banner_impression` / `banner_click` with zero container work).
 
 ```bash
 cd "$(git rev-parse --show-toplevel)"
@@ -74,110 +73,92 @@ grep -n "<candidate form>"        docs/dev/tracking-plan/form_submit.md    # the
 
 Three outcomes, in order of preference:
 
-1. **Reuse as-is.** An existing event and an existing id already cover it. Dev pushes it on the new
-   surface. No GTM change, no new custom dimension, straight to QA.
-2. **Reuse with a new id or a scope extension.** `cta_click` with a new `cta_id`, or an existing
-   event whose surface exclusion is lifted. Still no new trigger or tag: the `cta_click` Custom
-   Event trigger already fires for any `data-gtm-cta`.
-3. **New event.** Nothing covers it. Full build: trigger, tag, variables, custom dimensions.
+1. **Reuse as-is.** An existing event and id cover it. Dev pushes it on the new surface; straight
+   to QA.
+2. **Reuse with a new id or scope extension.** `cta_click` with a new `cta_id`, or a lifted
+   surface exclusion. No new trigger or tag: the `cta_click` trigger fires for any `data-gtm-cta`.
+3. **New event.** Full build: trigger, tag, variables, custom dimensions.
 
-Also run the interaction against the **Exclusions** table in `cta_click.md` and report which event
-already owns it. `cta_click` is the residual CTA event and must never overlap another:
+Check the interaction against the **Exclusions** table in `cta_click.md` and name the event that
+already owns it. `cta_click` is the residual event and never overlaps another. A button that
+**opens** a form is a `cta_click`; the submission is `form_submit`. That is two actions, not a
+conflict.
 
-| Action | Owned by |
-|---|---|
-| "Visit website" links on a card | `card_website_click` |
-| View profile, logo, reviews on a card | `card_click` |
-| Any form submission | `form_submit` |
-| In-text internal / external links on article pages | `inbound_link_click` / `outbound_link_click` |
-| Share buttons | `social_share` |
-| Mid-page promo banner buttons | `banner_click` |
+**State the verdict in bold at the top of the spec.** It tells the dev team whether they are
+blocked on analytics.
 
-A button that **opens** a form flow is a `cta_click`; the eventual submission is `form_submit`. Two
-actions at two different times, not a conflict.
+## D3 - Candidate KPI rows
 
-The verdict carries downstream. **State it in bold at the top of the spec**, because it tells the
-dev team whether they are blocked on analytics or free to ship immediately.
-
-## D3 - Surface the candidate KPI rows
-
-Read `docs/business/key-performance-indicators.md` and list every row the proposed event could
-feed, saying for each whether the event would be the **numerator** or the **denominator**.
+List every row in `key-performance-indicators.md` the event could feed, and whether it is the
+**numerator** or **denominator**:
 
 ```
 Candidate KPI rows for `card_click`:
-- E - Discovery / card-to-profile rate - would be a new numerator alongside
+- E - Discovery / card-to-profile rate: a new numerator alongside
   `profile_view (source_surface=category)`; the denominator `card_impression
   (source_surface=category)` already exists.
 - No existing row measures card engagement directly.
 ```
 
-If nothing matches, **say so plainly**. "No KPI row in the catalog covers this" is a legitimate and
-useful output. Do not manufacture a row to make the request pass.
+If nothing matches, say so. Never manufacture a row.
 
 ## D4 - Stop at the KPI gate
 
-> **The KPI gate:** a metric must answer a question tied to a KPI or a decision that will be made;
-> if it does not, it goes back to the requester to sharpen or drop.
+> A metric must answer a question tied to a KPI or a decision that will be made; otherwise it
+> goes back to the requester to sharpen or drop.
 
-This skill **surfaces** the candidate rows and states when none match. **It must not decide.** End
-define mode with a recommendation and a stop:
+The skill **surfaces**; it does not decide. End with a recommendation and a stop:
 
 ```
 Reuse verdict: reuse with a new cta_id (no GTM change).
 KPI rows matched: none directly; nearest is H - CTA click rate by surface.
-Recommendation: sharpen or drop - the requester has not named a decision this would change.
+Recommendation: sharpen or drop. The requester has not named a decision this would change.
 Waiting on the analyst.
 ```
 
-Then stop. Do not proceed to spec mode in the same run unless the gate is explicitly cleared.
+Do not continue to spec mode in the same run unless the gate is explicitly cleared.
 
-## D5 - Draft the event and parameters
+## D5 - Draft the event
 
-Only once the gate is cleared. A `snake_case` event name and a **flat** parameter set, every value
-inside a controlled vocabulary. Flag which params need to be sliceable in GA4 - those become custom
-dimensions in build mode. Params that are not registered land in BigQuery but stay invisible in GA4
-reports.
-
-Then run the [Validation](#validation-run-this-on-every-draft) checks before writing anything.
+Only after the gate clears. A `snake_case` name and a **flat** param set, every value inside a
+controlled vocabulary. Flag params that must be sliceable in GA4; they become custom dimensions
+in build mode (unregistered params reach BigQuery but not GA4 reports). Then run
+[Validation](#validation-every-draft).
 
 ---
 
 # spec mode
 
-Spec mode generates **both** documents. They serve different readers and neither substitutes for
-the other.
+Two documents, different readers; neither substitutes for the other.
 
 | Document | Path | Reader | Life |
 |---|---|---|---|
-| Tracking-plan event page | `docs/dev/tracking-plan/<event_name>.md` | anyone querying the event, forever | evergreen, one per event |
-| Dev handoff spec | `docs/dev/specs/<domain>/<subject>.md` | the dev team, for this build | dated, one per project |
+| Tracking-plan page | `docs/dev/tracking-plan/<event_name>.md` | anyone querying the event | evergreen, one per event |
+| Dev handoff spec | `docs/dev/specs/<domain>/<subject>.md` | the dev team, this build | dated, one per project |
 
-`<domain>` is an existing folder where one fits: `forms`, `homepage-redesign`, `cards`,
-`display-ads`. A new domain folder is a deliberate choice, not a default.
+`<domain>` is an existing folder where one fits (`forms`, `homepage-redesign`, `cards`,
+`display-ads`). A new folder is a deliberate choice.
 
-## S1 - The tracking-plan event page
+## S1 - Tracking-plan page
 
-Follow the anatomy of the existing sibling pages (`cta_click.md`, `card_impression.md`,
-`form_submit.md`). **The body is the spec.** Unknown values are the literal string `TBD`, never a
-guess.
+Follow the anatomy of `cta_click.md`, `card_impression.md` and `form_submit.md`. Unknown values
+are the literal `TBD`, never a guess.
 
 ```markdown
 # <event_name>
 
 **Status:** Active / Spec'd, not built / Broken
-                 (copy the status glyph convention from a sibling page in `docs/dev/tracking-plan/`)
+                 (copy the status glyph convention from a sibling page)
 
-**dataLayer migration:** <one line on where the tag fires from and what was deleted>
+**dataLayer migration:** <one line: where the tag fires from, what was deleted>
 
-<What fires it, in one paragraph: the exact user action, the push, the dedup rule, and what it is
-deliberately distinct from.>
+<One paragraph: the user action, the push, the dedup rule, and what it is distinct from.>
 
 ## Known issues
 ## Exclusions            <- when the event could overlap another
 ## Screenshot
 ## Trigger               <- table: Trigger ID, name, type, filter, tag
-## DataLayer push        <- the reset push, then the event push, then a reference implementation
+## DataLayer push        <- the reset push, the event push, a reference implementation
 ## Parameters            <- table: Parameter, Type, Source, Notes
 ## Valid values          <- per-param enums, linking to conventions.md for shared ones
 ## Dimensions & metrics mapping   <- table: Parameter, GA4 dimension, Scope, CD slot, Notes
@@ -185,96 +166,90 @@ deliberately distinct from.>
 ## Implementation notes  <- checkbox list, the dev-facing summary
 ```
 
-Two things the page must always carry:
+Always carry the **state-reset push** at the head of every code block, and the counting rule when
+raw events overstate reality. `form_submit` over-fires about 8x on a contact overlay, so its page
+mandates `COUNT(DISTINCT CONCAT(user_pseudo_id, '-', CAST(ga_session_id AS STRING)))`; any event
+that re-fires the same way needs the same note.
 
-- The **state-reset push** at the head of every code block (see [Validation](#validation-run-this-on-every-draft)).
-- The counting rule, when raw events overstate reality. `form_submit` over-fires roughly 8x on a
-  contact overlay, so its page mandates `COUNT(DISTINCT CONCAT(user_pseudo_id, '-',
-  CAST(ga_session_id AS STRING)))`. Any event with a similar re-fire pattern needs the same note.
+## S2 - Dev handoff spec
 
-## S2 - The dev handoff spec
+Pick the shape by scope.
 
-Two shapes exist in the repo. Pick by scope.
-
-**Lean** - a small, well-bounded change to an existing event. Model:
+**Lean**, for a small change to an existing event. Model:
 `docs/dev/specs/forms/form-submit-instrumentation-spec.md`.
 
 ```markdown
 # <subject> (dev spec)
 
+<Plain-words line: what is tracked, and whether the dev team is blocked.>
+
 **Task:** [<task-id>](<task-url>)
 **Owner:** analytics · **Implementer:** dev team
 **Status:** <where it is right now>
 
-**<The reuse verdict, in bold.>** e.g. "No GTM changes needed - the live
+**<The reuse verdict, in bold.>** e.g. "No GTM changes needed: the live
 `Custom Event - form_submit` trigger picks the pushes up as soon as the frontend fires them."
 
 Canonical event contract: [`tracking-plan/<event>.md`](../../tracking-plan/<event>.md).
 
-## The pattern (already live elsewhere)   <- point at a working reference implementation
+## The pattern (already live elsewhere)   <- a working reference implementation
 ## Push payload                           <- one fenced block, copy-pasteable
-## Forms / surfaces to instrument          <- table, priority order, every param value filled in
+## Forms / surfaces to instrument          <- table, priority order, every param filled in
 ## Rules                                   <- the invariants, one line each
 ```
 
-**Rich** - a redesign or a multi-interaction surface. Model: the richest redesign handoff in
+**Rich**, for a redesign or multi-interaction surface. Model: the richest redesign handoff in
 `docs/dev/specs/`.
 
 ```markdown
 # <surface> - analytics handoff (`<path>`)
 
-<Intro: what is being built, links to the redesign task and Figma, and a sentence saying this
-supersedes any provisional event names in the design doc.>
+<Plain-words line, then: what is being built, links to the redesign task and Figma, and a
+sentence saying this supersedes any provisional event names in the design doc.>
 
 ## Page-level facts        <- table: URL, source_surface, page_type, reset push
 ## Interaction → event map (the contract)
-   <- table: Section | Element | Action | Event | Key id / params, one row per tracked interaction
+   <- table: Section | Element | Action | Event | Key id / params, one row per interaction
 ## What's new vs. reused
-   <- four buckets: new custom event / new ids / scope change to an existing event / reused as-is
+   <- new custom event / new ids / scope change to an existing event / reused as-is
 ---
 ## Section detail
 ### N. <section> → <event>
-   <screenshot>, markup contract table, the html hooks, the reset push + event push, params table
+   <screenshot>, markup contract table, the html hooks, reset push + event push, params table
 ## Markup contract summary  <- every data-gtm-* hook the page must carry
 ## Action items             <- checkbox list, each prefixed **dev** or **gtm-admin**
 ```
 
-The section detail is what the dev team builds from: a screenshot per tracked element, the exact
-`data-gtm-*` hooks, and a dedup rule wherever two elements could fire on one click ("the card-click
-handler must ignore clicks that originate on the outbound link").
+Section detail needs a screenshot per tracked element, the exact `data-gtm-*` hooks, and a dedup
+rule wherever two elements could fire on one click ("the card-click handler must ignore clicks
+that originate on the outbound link").
 
-## S3 - Ownership, written into every spec
-
-Non-negotiable, and stated explicitly so nobody waits on the wrong team:
+## S3 - Ownership, in every spec
 
 | Owner | Owns |
 |---|---|
-| **analytics** (`gtm-admin`) | the GTM container: workspace, `Custom Event` trigger, `GA4 - <Event>` tag, `DLV - *` variables. Plus GA4 custom-dimension registration. |
-| **dev team** | the `dataLayer`: the `data-gtm-*` markup hooks and every `dataLayer.push`. |
+| **analytics** (`gtm-admin`) | the GTM container (workspace, `Custom Event` trigger, `GA4 - <Event>` tag, `DLV - *` variables) and GA4 custom-dimension registration |
+| **dev team** | the `dataLayer`: the `data-gtm-*` hooks and every `dataLayer.push` |
 
-Say **"dev team"**, never "engineering". In action-item lists the two owners are written **dev** and
-**gtm-admin**, one prefix per checkbox. Dev works on a `CU-<task-id>` branch.
-
-The markup hooks and the push **are part of the template**: they must survive any redesign or
-refactor. That is what the `gtm-` prefix signals.
+Say "dev team", never "engineering". Action items carry one prefix each, **dev** or
+**gtm-admin**. Dev works on a `CU-<task-id>` branch. The hooks and the push are part of the
+template and must survive any redesign; that is what the `gtm-` prefix signals.
 
 ## S4 - Validate, then write
 
-Run every check in [Validation](#validation-run-this-on-every-draft). Fix or flag each failure
-before the file is written. Then write both documents into `docs/` - they are durable and
-team-facing (see [Where things are written](#where-things-are-written)).
+Run [Validation](#validation-every-draft), fix or flag each failure, then write both documents
+into `docs/`.
 
 ---
 
 # build mode
 
-Build mode is **read-only against the shared production container**. It reads the live state so the
-spec can carry real ids, and it emits the checklist of container work. **It never writes.**
+**Read-only against the shared production container. It never writes.**
 
 ## B1 - Read the container
 
-Scripts are in `src/gtm-api/`, driven by Python and `google-auth` directly (the community GTM MCP
-servers accept only Desktop OAuth, not a service account). Read scope is `tagmanager.readonly`.
+Python and `google-auth` directly, scope `tagmanager.readonly` (the community GTM MCP servers
+accept only Desktop OAuth, not a service account).
 
 ```bash
 cd "$(git rev-parse --show-toplevel)"
@@ -284,20 +259,18 @@ python3 src/gtm-api/list_workspaces.py    # workspaces, and whether the live ver
 python3 src/gtm-api/dump_tags.py          # full config for tags by id
 ```
 
-Only these four. The write scripts in the same directory are out of scope here.
+Only these four. The write scripts in the same directory are out of scope.
 
-Fill into the spec: the real **Trigger ID**, trigger name, tag name and **tagId**, and the `DLV - *`
-variable names each param reads from. Replace every `TBD` you can resolve; leave the rest as `TBD`.
+Fill into the spec the real **Trigger ID**, trigger name, tag name, **tagId**, and the `DLV - *`
+variable each param reads. Replace every `TBD` you can; leave the rest.
 
-API gotchas, so a read does not mislead: returned `path` values are relative (prefix
-`https://tagmanager.googleapis.com/tagmanager/v2/`); GA4 event tags carry their params in an
-`eventSettingsTable` list of `{parameter, parameterValue}` maps, not as top-level fields.
+API gotchas: returned `path` values are relative (prefix
+`https://tagmanager.googleapis.com/tagmanager/v2/`), and GA4 event tags keep params in an
+`eventSettingsTable` list of `{parameter, parameterValue}` maps, not top-level fields.
 
-## B2 - Emit the container checklist
+## B2 - Container checklist
 
-The work itself is a **human decision and a human action** (see
-[What stays a human decision](#what-stays-a-human-decision)). Emit it as a checklist for the
-analyst to execute in the GTM UI, not as commands to run:
+A checklist for the analyst to execute in the GTM UI, not commands to run:
 
 ```markdown
 - [ ] **gtm-admin**: create a fresh workspace named `<yyyy-mm-dd> <subject>`.
@@ -305,60 +278,47 @@ analyst to execute in the GTM UI, not as commands to run:
       filter `{{_event}}` equals `<event_name>`.
 - [ ] **gtm-admin**: create the `DLV - <param>` variables. Params inside `event_data` read
       `event_data.<param>` (Data Layer Version 2, dot notation). Top-level page context reads the
-      bare key - that is the `DLV - page_type` vs `DLV - page_type (event)` split.
-- [ ] **gtm-admin**: create tag `GA4 - <Event Name>` (type GA4 Event), event name `<event_name>`,
+      bare key: that is the `DLV - page_type` vs `DLV - page_type (event)` split.
+- [ ] **gtm-admin**: create tag `GA4 - <Event Name>` (GA4 Event), event name `<event_name>`,
       params from the `DLV - *` variables, firing on the trigger above.
 - [ ] **gtm-admin**: register `<param>` as a GA4 custom dimension (Admin → Custom definitions).
-      Unregistered params land in BigQuery but stay invisible in GA4 reports.
 - [ ] **dev**: markup hooks and the `dataLayer.push` on a `CU-<task-id>` branch, then staging.
 ```
 
-GTM naming, from `conventions.md`, is not optional:
+GTM naming (from `conventions.md`): Tag `GA4 - Form Submit`, Trigger `Custom Event - form_submit`,
+Variable `DLV - source_surface`, each `[Type] - [Description]`.
 
-| Object | Format | Example |
-|---|---|---|
-| Tag | `[Type] - [Description]` | `GA4 - Form Submit` |
-| Trigger | `[Event/Type] - [Description]` | `Custom Event - form_submit` |
-| Variable | `[Type] - [Description]` | `DLV - source_surface` |
-
-Two constraints to state every time: a numeric param lands in `value.int_value`, not
-`value.string_value`, in the BigQuery export; and publishing a workspace **consumes** it against the
-free-tier three-workspace cap, so create a fresh workspace per publish.
+State both every time: a numeric param lands in `value.int_value`, not `value.string_value`; and
+publishing **consumes** a workspace against the free-tier cap of three, so create a fresh one per
+publish.
 
 ## B3 - Reuse path
 
-If the reuse check said "reuse as-is" or "reuse with a new id", build mode's whole output is one
-line: **no container work; the existing trigger already fires**. Skip to qa mode. Say it in bold so
-nobody opens a workspace out of habit.
+If D2 said reuse, build mode's whole output is one bold line: **no container work; the existing
+trigger already fires.** Skip to qa.
 
 ---
 
 # qa mode
 
-Two checklists. They are **different**, not the same list run twice. Build each one from the spec's
-own contract rows - one check per tracked interaction, per param, per enum value - so the checklist
-is as specific as the spec.
+Staging and production get different checklists, each built from the spec's contract rows: one
+check per interaction, param and enum value.
 
 ## Staging QA
 
-**Delegate the run to the `tracking-qa` agent.** It drives a real browser through every surface in
-the spec's per-instance table, reads the `dataLayer` and the emitted GA4 hits directly, and returns
-a PASS or FAIL per surface. Give it the spec path, the URLs, and **an explicitly named browser** -
-it will refuse to guess between the work and personal Chrome profiles, by design. Your job in this
-mode is to hand it the contract and act on its verdict, not to click through the site yourself.
+**Delegate to the `tracking-qa` agent** with the spec path, the URLs, and **an explicitly named
+browser** (it refuses to guess between the work and personal Chrome). Hand it the contract and act
+on its verdict; do not click through the site yourself.
 
-The staging hosts sit behind **HTTP basic auth**. Authenticate that browser profile by hand before
-the run. **Never inline those credentials** into a spec, a QA file, a command in the transcript, or
-anything under `docs/`.
+The staging hosts sit behind HTTP basic auth. Authenticate the browser by hand first. **Never
+inline those credentials** in a spec, QA file, transcript command or anything under `docs/`.
 
-**Two mechanical traps.** Both produce a false "not firing" verdict:
+Two traps that produce a false "not firing", for reading its report:
 
-1. **gtag batches post-load events and flushes on unload.** Click and scroll events are queued, not
-   sent immediately, and are **not visible before navigation**. Never conclude "not firing" from a
-   missing live hit on a click that navigated away.
-2. **The browser network tool redacts any URL containing a query string**, which hides all GA4/GTM
-   traffic, since every collect hit is query-string-encoded. Read hits from the resource timing API
-   instead and parse `en=` for the event name:
+1. **gtag batches post-load events and flushes on unload.** Clicks and scrolls are not visible
+   before navigation; confirm from the `dataLayer` push instead.
+2. **The browser network tool redacts URLs with a query string**, which hides every GA4/GTM hit.
+   Read hits from resource timing, or use Tag Assistant:
 
 ```js
 performance.getEntriesByType('resource')
@@ -366,9 +326,8 @@ performance.getEntriesByType('resource')
   .map(r => new URLSearchParams(r.name.split('?')[1]).get('en'));
 ```
 
-Or use Tag Assistant, which is not subject to the redaction. A batched POST to `/g/collect`
-carries its event names in the body, not the URL, so an `en=` parse that comes up empty is
-inconclusive for post-load events - confirm from the `dataLayer` or Tag Assistant.
+A batched POST to `/g/collect` carries its event names in the body, not the URL, so an empty
+`en=` parse is inconclusive for post-load events; confirm from the `dataLayer` or Tag Assistant.
 
 The checklist:
 
@@ -376,44 +335,37 @@ The checklist:
 - [ ] Fires on the correct interaction, and on **no other**.
 - [ ] Fires **before** any cross-domain redirect or navigation.
 - [ ] The state-reset push precedes every event push.
-- [ ] The event carries **exactly** the spec'd params - no missing ones, and **no extras**.
-      Extras drift into inconsistency and are as much a failure as a missing param.
+- [ ] Carries **exactly** the spec'd params: none missing, **no extras** (extras are a failure
+      too, because they drift).
 - [ ] Every value is inside its controlled vocabulary (`source_surface`, `form_type`, `cta_id`).
-- [ ] Fires exactly once per action. No double-count where two elements overlap.
-- [ ] For forms: fires on server-confirmed success only, never on validation error or a 4xx/5xx.
-      QA with a real-domain address at human speed - the endpoint rejects bad-MX domains (422) and
-      honeypot / too-fast submits (400), and the push correctly does not fire on either.
+- [ ] Fires exactly once per action; no double-count where elements overlap.
+- [ ] Forms: fires on server-confirmed success only, never on validation error or 4xx/5xx. QA
+      with a real-domain address at human speed: the endpoint rejects bad-MX domains (422) and
+      honeypot or too-fast submits (400), and the push correctly skips both.
 - [ ] Per interaction row in the spec's contract table: <one line each>
 ```
 
-**The gate:** anything failing loops back to the dev team, not forward. Only a clean pass ships.
+**Gate:** any failure loops back to the dev team. Only a clean pass ships.
 
 ## Production QA
 
-### Step 0, mandatory: confirm the build actually reached production
+**Step 0, mandatory: confirm the QA'd build reached production.** Check the merge and release, or
+diff the live markup for the required `data-gtm-*` hooks. Live banners once emitted the wrong id
+for weeks because a staging-green build was never deployed, and every later check read as an
+ingestion problem.
 
-Before checking anything else, confirm the QA'd build is deployed. Check the merge and the release,
-or diff the live markup for the `data-gtm-*` hooks the spec requires.
+Then the ingestion ladder:
 
-This is not ceremony. A real incident: live banners emitted the wrong id and produced zero tracking
-for weeks, because a staging-green build was never deployed. Every downstream check would have read
-as "ingestion problem" and sent the investigation the wrong way.
-
-### Then the ingestion ladder, by latency
-
-| Layer | Latency | What it proves |
+| Layer | Latency | Proves |
 |---|---|---|
 | GA4 DebugView / Realtime | about 5 minutes | the tag fires and the hit reaches GA4 |
-| GA4 standard reports | 24 to 48 hours | the params resolve as registered dimensions |
-| BigQuery `events_*` (finalized) | one to two days | the full payload, queryable |
+| GA4 standard reports | 24 to 48 hours | params resolve as registered dimensions |
+| BigQuery `events_*` | D-1, sometimes D-2 (the session-start freshness line has the real boundary) | the full payload, queryable |
 
-**There is no `events_intraday_*` table.** The newest finalized shard trails by a day or two -
-the session-start freshness line prints the real boundary - so a same-day change is invisible
-until its date exports. If the SOP or an older spec
-says `events_intraday_*`, **the SOP is stale** - flag it for the evergreen doc update in ship mode.
-
-A **503 on `/g/collect`** during automated prod QA is most likely bot-flagging of the automated
-browser, not an ingestion failure. Confirm with a manual hit before escalating.
+There is no `events_intraday_*` table, so a same-day change is invisible in BigQuery until that
+date exports. If the SOP or an older spec says `events_intraday_*`, it is stale; flag it for P4.
+A **503 on `/g/collect`** during automated QA is most likely bot-flagging of the automated
+browser; confirm with a manual hit before escalating.
 
 ---
 
@@ -421,8 +373,7 @@ browser, not an ingestion failure. Confirm with a manual hit before escalating.
 
 ## P1 - Publish checklist
 
-Publishing is a human action in the GTM UI. The API service account has **Edit, not Publish**; a
-version-create or publish call returns 403.
+Publishing is a human action in the GTM UI; the service account has Edit, not Publish (403).
 
 ```markdown
 - [ ] **dev**: merge the `CU-<task-id>` branch to production and deploy.
@@ -431,21 +382,15 @@ version-create or publish call returns 403.
 - [ ] **gtm-admin**: run production QA (step 0 first).
 ```
 
-Order matters. Publishing a tag before the pushes are live produces a tag that fires on nothing;
-deploying pushes before the tag exists produces events GA4 drops.
+Order matters: a tag published before the pushes fires on nothing, and pushes deployed before the
+tag produce events GA4 drops.
 
 ## P2 - BigQuery verification
 
-Run at D-2 or later. Four things this query does that a naive one does not:
-
-- filters on **`_TABLE_SUFFIX`**, never `event_date`;
-- reports param **presence rate per day**, not mere presence, so partial coverage is visible (a
-  `form_name` regression sat at 4.2% and read as "present");
-- coalesces **`string_value`, `int_value` and `double_value`** before concluding a param is missing;
-- applies the **standing spam exclusion** via the canonical view, with **`NOT EXISTS`, never
-  `NOT IN`** - a single NULL session id on either side of a `NOT IN` empties the result or leaks
-  rows with no error, and during post-ship verification an empty result reads exactly like "the
-  event never fired".
+Run once the date's shard exists. The query filters on `_TABLE_SUFFIX`, reports param **presence
+rate per day** (a `form_name` regression sat at 4.2% and read as "present"), coalesces all three
+value types, and excludes spam with **`NOT EXISTS`, never `NOT IN`**: one NULL session id in a
+`NOT IN` empties the result, which reads exactly like "the event never fired".
 
 ```sql
 WITH ev AS (
@@ -479,18 +424,18 @@ GROUP BY d
 ORDER BY d;
 ```
 
-Read it as: `events` should match the expected volume, `param_presence_rate` should be at or near
-1.000 on every day (not just in total), and `distinct_values` should equal the vocabulary size with
-no strays. For any event that over-fires, report **sessions**, never raw events.
-
-Run it with the `bq` CLI. Confirm the work account before querying, never personal.
+Pass means: `events` near the expected volume, `param_presence_rate` at or near 1.000 **on every
+day**, and `distinct_values` equal to the vocabulary size with no strays. For any event that
+over-fires, report sessions. Run with the `bq` CLI on the work account.
 
 ## P3 - Closeout
 
-Write the closeout to `docs/dev/feedback-loop/GTM-<Subject>-Closeout-<task-id>.md`:
+Write `docs/dev/feedback-loop/GTM-<Subject>-Closeout-<task-id>.md`:
 
 ```markdown
 # <subject> - closeout (<task-id>)
+
+<Plain-words line: what now works, and anything accepted as broken.>
 
 **Shipped:** <date>  ·  **Rounds of QA:** <n>  ·  **Container version:** v<nnn>
 
@@ -498,122 +443,87 @@ Write the closeout to `docs/dev/feedback-loop/GTM-<Subject>-Closeout-<task-id>.m
 ## What was found in QA, and what was changed
 ## Known defects accepted as-is, and why
 ## Verification
-   <the BigQuery numbers, the dates they cover, and what they confirm>
+   <the BigQuery numbers, the dates they cover, what they confirm>
 ## Still open
 ```
 
-Accepted defects belong here explicitly. `form_submit` thank-you-page pushes re-firing on refresh
-was accepted as-is on 2026-07-22, and the closeout is why anyone reading the numbers a year later
-knows that.
+Accepted defects go here explicitly. The `form_submit` thank-you-page re-fire on refresh was
+accepted on 2026-07-22, and the closeout is how a reader a year later knows it.
 
-## P4 - Evergreen docs to update
+## P4 - Evergreen docs
 
-Nothing ships that is not written down. Work through this list and say which ones changed:
+Work through the list and say which changed:
 
 | Doc | Update when |
 |---|---|
-| `docs/dev/tracking-plan/<event>.md` | always. Status, real trigger/tag ids, known issues, verified param coverage |
-| `docs/dev/tracking-plan/README.md` | a new custom event joins the table, or an event's status changes |
-| `docs/config/conventions.md` | a vocabulary was extended, or a new `data-gtm-*` hook was added |
-| `docs/config/ga4.md` | a param was registered as a custom dimension; record the slot index |
-| `docs/config/gtm.md` | container version, new tag/trigger inventory |
-| `docs/business/key-performance-indicators.md` | the event feeds a KPI row, or unblocks a blocked one |
+| `docs/dev/tracking-plan/<event>.md` | always: status, real ids, known issues, verified param coverage |
+| `docs/dev/tracking-plan/README.md` | a new event joins, or a status changes |
+| `docs/config/conventions.md` | a vocabulary grew, or a new `data-gtm-*` hook was added |
+| `docs/config/ga4.md` | a param was registered; record the slot index |
+| `docs/config/gtm.md` | container version, tag/trigger inventory |
+| `docs/business/key-performance-indicators.md` | the event feeds or unblocks a KPI row |
 | `docs/dev/specs/<domain>/<subject>.md` | status line: shipped, QA'd, prod-verified |
-| the Validation section of this skill | a controlled vocabulary was extended; its "exactly these N" lists are snapshots |
 
-Two known drifts worth checking on any form work: `conventions.md` still lists fewer `form_type`
-values than `tracking-plan/form_submit.md` carries (the newer file is right); and the SOP still
-references `events_intraday_*`, which does not exist.
+Two known drifts on any form work: `conventions.md` lists fewer `form_type` values than
+`tracking-plan/form_submit.md` (the newer file is right), and the SOP still references
+`events_intraday_*`.
 
 ---
 
-# Validation, run this on every draft
+# Validation, every draft
 
-Mechanical checks. Run them on any draft, in any mode, before a file is written. Each failure is a
-reject with the specific reason, not a warning.
+Run on any draft, in any mode, before a file is written. Each failure is a reject with its
+reason, not a warning.
 
-## Vocabularies
+**Vocabularies.** `source_surface` and `form_type` accept exactly the values in the docs; read
+them there, never from memory. `source_surface` comes from `conventions.md`; `form_type` from
+`tracking-plan/form_submit.md`, which is ahead of `conventions.md`. The retired granular surfaces
+(`article_snippet`, `category_sub`, `search`, …) must not return in docs, dashboards, KPIs or
+BigQuery predicates.
 
-**`source_surface` - exactly these 8 values.** Anything else is a reject.
+**`cta_id`** is unique across `cta_click` and `card_click`. Grep the catalog in `cta_click.md`
+first. Lowercase kebab-case, `{action}` or `{context}-{action}`; the human label goes in
+`cta_text`, never in the id.
 
-`homepage` · `category` · `article` · `profile` · `search_results` · `dashboard` · `pricing` ·
-`footer`
+**Names.** Events are `snake_case`, max 40 characters, verb-noun. Never redefine `page_view`,
+`session_start`, `user_engagement`, `first_visit`, `scroll`, `file_download`. Params are
+`snake_case`; booleans `is_*` / `has_*`, ids `*_id`, free text a bare noun (`card_name`).
 
-The granular values (`article_snippet`, `category_sub`, `search`, …) were **deliberately
-collapsed** into these and are retired. The collapse is one-way: they must not come back in docs,
-dashboards, KPIs or BigQuery predicates.
+**Length limits.** Over-limit values are truncated; an invalid `page_location` yields an empty
+dimension. `page_location` 1,000 (a valid URL path), `page_referrer` 420, `page_title` 300, every
+other param 100.
 
-**`form_type` - exactly these 8.** Off-enum values are a reject; `form_type` drives every form KPI.
-
-`contact` · `inquiry` · `newsletter` · `signup` · `demo_request` · `advertise` · `review` ·
-`sponsorship`
-
-**`cta_id` - must be globally unique across `cta_click` and `card_click`.** Never reuse a value.
-Grep the catalog in `cta_click.md` before proposing one. Naming is lowercase kebab-case,
-`{action}` or `{context}-{action}` when disambiguation is needed; the human label rides in
-`cta_text`, never baked into the id.
-
-## Names
-
-- Event names: `snake_case`, lowercase, **max 40 characters**, verb-noun shape.
-- Reserved GA4 names, never redefine: `page_view`, `session_start`, `user_engagement`,
-  `first_visit`, `scroll`, `file_download`.
-- Param names: `snake_case`. Booleans are `is_*` / `has_*`. Ids are `*_id`. Free text is a bare
-  noun (`card_name`, `cta_text`).
-
-## GA4 value length limits
-
-Any param value exceeding its limit is truncated, and an invalid `page_location` produces an empty
-dimension rather than a truncated one.
-
-| Parameter | Max length |
-|---|---|
-| `page_location` | 1,000 (and must be a valid URL path) |
-| `page_referrer` | 420 |
-| `page_title` | 300 |
-| every other event parameter | 100 |
-
-## The state-reset push
-
-**Every generated code block emits it.** No exceptions.
+**State-reset push, in every generated code block:**
 
 ```js
 dataLayer.push({ event_data: undefined, items: undefined, item_list_name: undefined });
 dataLayer.push({ event: '<event_name>', event_data: { /* params */ } });
 ```
 
-Without it a `card_impression` followed by a `form_submit` leaks the card context into the form
-event. The rule is enforced across the site bundles and every inline push.
+Without it a `card_impression` followed by a `form_submit` leaks card context into the form
+event. Enforced across the site bundles and every inline push.
 
-## Overlap
-
-Run the proposed interaction against the **Exclusions** table in `cta_click.md` (reproduced in
-[D2](#d2---reuse-check-before-anything-else)) and report which existing event already owns it. Where
-two elements sit inside one another, the spec must state the dedup rule explicitly.
+**Overlap.** Check the Exclusions table in `cta_click.md` and name the owning event. Where two
+elements nest, the spec states the dedup rule.
 
 ---
 
 # What stays a human decision
 
-This skill prepares, validates and reports. It does not decide any of the following. Surface the
-options, state the trade-off, and stop.
+The skill prepares, validates and reports. For each of these, surface the options and the
+trade-off, then stop:
 
-- **The KPI gate itself.** The skill surfaces candidate rows and says when none match. The analyst
-  decides whether the metric earns its place.
-- **The leanness call** - whether an interaction is too granular to track at all. Pagination, FAQ
-  accordions, gallery opens and sort/filter minutiae are **not tracked unless asked**. Propose the
-  omission; do not spec it in on your own initiative.
-- **Extending a controlled vocabulary.** `source_surface` was deliberately collapsed once and must
-  not drift back open. A ninth value is a deliberate decision, never a variant of an existing one.
-  Same for `form_type` and the `cta_id` catalog.
-- **New event versus extending an existing one**, when genuinely ambiguous. Lay out both readings.
-- **Accepting a known defect as-is.** Report it, quantify it, let the analyst decide.
-- **Every write to the shared production GTM container, and the publish itself.** The service
-  account has Edit but not Publish, so publishing happens in the GTM UI as the owner account,
-  version-named. Build mode reads; a human writes.
-- **Both QA sign-offs**, staging and production.
-- **Anything touching credentials.** Read them from private memory when a task genuinely needs them;
-  never inline, echo, or commit them.
+- **The KPI gate.** The analyst decides whether the metric earns its place.
+- **Leanness.** Pagination, FAQ accordions, gallery opens and sort/filter minutiae are not
+  tracked unless asked. Propose the omission; never spec them in unasked.
+- **Extending a vocabulary.** A new `source_surface`, `form_type` or `cta_id` catalog value is a
+  deliberate decision, never a variant of an existing one.
+- **New event vs extending one**, when genuinely ambiguous. Lay out both.
+- **Accepting a known defect.** Report and quantify it; the analyst decides.
+- **Every write to the production GTM container, and the publish.** Build mode reads; a human
+  writes and publishes in the GTM UI.
+- **Both QA sign-offs.**
+- **Credentials.** Read from private memory when needed; never inline, echo or commit them.
 
 ---
 
@@ -621,20 +531,16 @@ options, state the trade-off, and stop.
 
 | What | Where | Committed |
 |---|---|---|
-| Tracking-plan event page | `docs/dev/tracking-plan/<event>.md` | yes |
+| Tracking-plan page | `docs/dev/tracking-plan/<event>.md` | yes |
 | Dev handoff spec | `docs/dev/specs/<domain>/<subject>.md` | yes |
 | Closeout | `docs/dev/feedback-loop/GTM-<Subject>-Closeout-<task-id>.md` | yes |
-| Screenshots for a spec | `docs/dev/specs/<domain>/img/<subject>/` | yes |
-| Per-round QA exchange, findings lists, dev back-and-forth | `wip/CU-<task-id>/` | **never** |
-| Scratch queries, intermediate CSVs, container dumps | `wip/CU-<task-id>/` | **never** |
+| Spec screenshots | `docs/dev/specs/<domain>/img/<subject>/` | yes |
+| QA rounds, findings, dev back-and-forth, scratch queries, dumps | `wip/CU-<task-id>/` | **never** |
 
-The rule, explicitly: **the tracking-plan page and the dev spec are durable and team-facing, so they
-go straight into `docs/`.** Per-round QA exchange files are scratch and belong in `wip/`, which is
-gitignored and never committed. A QA round is a conversation, not a record; the closeout is the
-record.
+A QA round is a conversation; the closeout is the record.
 
-Commit screenshots rather than pasting GitHub attachment URLs - `github.com/user-attachments/...`
-URLs need an authenticated session and render broken in a committed markdown file. Download with
-`curl -L -H "Authorization: Bearer $(gh auth token)" <url>`, confirm the real type with
-`file --mime-type` (attachments arrive extensionless and are often JPEG), save under `img/`, and
-reference it relatively.
+Commit screenshots rather than pasting `github.com/user-attachments/...` URLs, which need an
+authenticated session and render broken. Download with
+`curl -L -H "Authorization: Bearer $(gh auth token)" <url>`, check the real type with
+`file --mime-type` (attachments arrive extensionless, often JPEG), save under `img/`, and link it
+relatively.
