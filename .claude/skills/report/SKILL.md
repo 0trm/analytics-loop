@@ -95,8 +95,9 @@ The analyst has corrected each of these before. Apply them while writing.
 - **`.meta` line under the title: Window and Source, nothing else.** No author, no build date,
   no QA or "certified" label.
 - **TL;DR: one or two sentences.** The finding, its so-what and the one number that matters.
-- **Each TL;DR finding gets a chart** in the section that backs it. Tables back a chart up; they
-  never replace it.
+- **Chart a finding when it compares, trends or splits a whole** (A against B, change over time,
+  part of a total). A single number, a definition or a list of exact values stays text or a
+  table. Never add a chart just to have one.
 - **Outline** after the TL;DR, unless the report is a one-pager.
 - **Caveats: three at most**, per Writing for peers, under "What this cannot tell you".
 - **Report the block, not its parts.** For a set of placements or cards, report total
