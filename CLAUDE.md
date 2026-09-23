@@ -111,4 +111,4 @@ Keep the "Generated with Claude Code" line.
 finding and what to do next.
 
 Progress lines ("step 3 of 5 done") and the two-minute next action are for chat with the analyst,
-not for pages. A report ends on its recommendation, a ticket on its next step.
+not for pages. A report ends on its "What it adds up to" section, a ticket on its next step.

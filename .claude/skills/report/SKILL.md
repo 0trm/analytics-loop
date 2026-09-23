@@ -71,7 +71,7 @@ colours.
 | Token | Hex | Use |
 |---|---|---|
 | primary | `<brand-primary>` | text, headings, chart series 1 |
-| accent | `<brand-accent>` | links, TL;DR border, active states, chart series 2 |
+| accent | `<brand-accent>` | links, takeaway border, active states, chart series 2 |
 | accent-2 | `<brand-accent-2>` | secondary accents, later chart series |
 | positive | `<brand-positive>` | CTA, positive |
 | highlight | `<brand-highlight>` | highlights, warning |
@@ -94,11 +94,23 @@ The analyst has corrected each of these before. Apply them while writing.
   Never rename the slug to match.
 - **`.meta` line under the title: Window and Source, nothing else.** No author, no build date,
   no QA or "certified" label.
-- **TL;DR: one or two sentences.** The finding, its so-what and the one number that matters.
+- **Takeaway: one or two sentences.** The finding, the one number that matters, and where the
+  effect lands. The "Takeaway" eyebrow is drawn by CSS; never type it.
 - **Chart a finding when it compares, trends or splits a whole** (A against B, change over time,
   part of a total). A single number, a definition or a list of exact values stays text or a
   table. Never add a chart just to have one.
-- **Outline** after the TL;DR, unless the report is a one-pager.
+- **Outline** after the takeaway, unless the report is a one-pager.
+- **Sections answer the reader's questions, not the data's cuts.** Headings name what the reader
+  wants to know ("What we give up", "Who feels it"), not the breakdown ("Traffic by referrer").
+- **Each section runs point, why, what it means.** Open with the point in bold: one sentence and
+  its number. Give the evidence in two to four sentences. Where a number could be misread (a
+  ceiling, a proxy, a partial window), add a bold "Why ..." paragraph on how it was reached. Close
+  on one **What it means:** line, then the chart. A one-sentence section reads as shallow.
+- **Rule out the tempting wrong reading.** When readers would likely blame the change for
+  something (a decline, a spike), give that its own section: what the change did not cause, and why.
+- **Close on "What it adds up to"**, after "What this cannot tell you": two or three sentences
+  with the finding, where it lands, and the recommendation if there is one. Never end on caveats.
+  A four-section report runs about 600 words.
 - **Caveats: three at most**, per Writing for peers, under "What this cannot tell you".
 - **Report the block, not its parts.** For a set of placements or cards, report total
   impressions, interactions and CTR for the block. Per-entity numbers go in an appendix, on
@@ -173,7 +185,7 @@ If the work came from a tracked task (`wip/CU-<id>/brief.md` names it), and afte
 confirms:
 
 1. Attach `docs/reports/<slug>.pdf` with `clickup_attach_task_file`.
-2. Comment the one-line TL;DR, plus any caveat that changes how to use the number (a partial
+2. Comment the takeaway, plus any caveat that changes how to use the number (a partial
    window, a dead event, an excluded surface).
 3. Check the brief's definition of done item by item and say which are met. Where the brief
    names a decision, say what the answer means for it.
@@ -200,7 +212,7 @@ tracker was updated, and which checks actually ran. Name any step skipped or par
   and project boilerplate.
 - `sources/<slug>/connection.yaml`: `name: <slug_snake>`, `type: csv`.
 - `pages/<slug>/index.md`: frontmatter (`title`, `description`, `hide_children: true`),
-  `{@partial "brand.md"}`, then the `.meta` line, TL;DR, Outline and sections.
+  `{@partial "brand.md"}`, then the `.meta` line, takeaway, Outline, sections and "What it adds up to".
 - A `<LinkButton url='/<slug>'>` on the hub `pages/index.md` with the same title.
 
 ### N3 - Test the query
@@ -217,7 +229,7 @@ not at build time.
 
 ### N5 - Checkpoint and ship
 
-Continue at step 3. At the checkpoint, also paste the TL;DR and section list in chat. Then steps
+Continue at step 3. At the checkpoint, also paste the takeaway and section list in chat. Then steps
 4 to 8.
 
 ## Hard rules
