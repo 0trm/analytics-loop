@@ -101,7 +101,7 @@ bodies and comments, clarifying questions, PR bodies. Skills point here rather t
 - The author, a "prepared by" line, and any QA or "certified" label. QA still runs; its result
   goes to the analyst in chat, never on the page.
 - Caveats beyond three. Keep only the ones that change how a reader uses the number, one plain
-  sentence each, under "What this cannot tell you". The rest go to the analyst in chat.
+  sentence each, under "Limitations". The rest go to the analyst in chat.
 
 **PR bodies:** one or two sentences on what changed and why, then at most three one-line bullets,
 under 100 words. Detail a reviewer needs goes in a collapsed `<details>` block, never the body.
@@ -111,4 +111,4 @@ Keep the "Generated with Claude Code" line.
 finding and what to do next.
 
 Progress lines ("step 3 of 5 done") and the two-minute next action are for chat with the analyst,
-not for pages. A report ends on its "What it adds up to" section, a ticket on its next step.
+not for pages. A report ends on its Conclusion, a ticket on its next step.

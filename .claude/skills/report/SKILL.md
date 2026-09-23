@@ -108,10 +108,10 @@ The analyst has corrected each of these before. Apply them while writing.
   on one **What it means:** line, then the chart. A one-sentence section reads as shallow.
 - **Rule out the tempting wrong reading.** When readers would likely blame the change for
   something (a decline, a spike), give that its own section: what the change did not cause, and why.
-- **Close on "What it adds up to"**, after "What this cannot tell you": two or three sentences
+- **Close on "Conclusion"**, after "Limitations": two or three sentences
   with the finding, where it lands, and the recommendation if there is one. Never end on caveats.
   A four-section report runs about 600 words.
-- **Caveats: three at most**, per Writing for peers, under "What this cannot tell you".
+- **Caveats: three at most**, per Writing for peers, under "Limitations".
 - **Report the block, not its parts.** For a set of placements or cards, report total
   impressions, interactions and CTR for the block. Per-entity numbers go in an appendix, on
   request, unless the decision is about one entity.
@@ -212,7 +212,7 @@ tracker was updated, and which checks actually ran. Name any step skipped or par
   and project boilerplate.
 - `sources/<slug>/connection.yaml`: `name: <slug_snake>`, `type: csv`.
 - `pages/<slug>/index.md`: frontmatter (`title`, `description`, `hide_children: true`),
-  `{@partial "brand.md"}`, then the `.meta` line, takeaway, Outline, sections and "What it adds up to".
+  `{@partial "brand.md"}`, then the `.meta` line, takeaway, Outline, sections, Limitations and Conclusion.
 - A `<LinkButton url='/<slug>'>` on the hub `pages/index.md` with the same title.
 
 ### N3 - Test the query
