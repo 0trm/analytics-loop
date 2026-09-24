@@ -64,6 +64,10 @@ view names belong only in Next steps, where the person doing the work needs them
 - The markers ship literally, asterisks included, each heading on its own line. ClickUp returns
   `**` unchanged, so a body that comes back without them was written without them.
 - Deliverables numbered, Next steps bulleted, with native markdown markers.
+- Next steps never send the analyst to a person or team ("Confirm with the devs", "Ask the
+  stakeholder"). Write the open question itself, led by "Clarify": "Clarify which URL
+  parameters mark a filtered page and since when the button is missing there." They answer most
+  from the code, the data or the live page; who to ask, if anyone, is their call.
 - Every item stays. If Deliverables or Next steps pass five, tell the analyst in chat; they
   decide whether to split the task. Never cut an item or fold a section into prose.
 - Preserve every fact and every link. Collect all URLs (description, custom fields, related
@@ -118,6 +122,9 @@ _TODO: no decision named_ rather than inventing one.}
 
 ## Known constraints
 {date window, forms or surfaces, dead events to avoid, prior work. Empty rather than guessed.}
+
+## Open questions
+{each "Clarify" next step, to resolve first from code, data or the live page. Empty if none.}
 ```
 
 The execution session and the `qa` agent both read it, so the definition of done must be
