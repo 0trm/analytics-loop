@@ -17,7 +17,7 @@ rework iterations per task; the task tracker supplies both, since every request 
 and leaves at delivery. Rework climbing means the work is pointed wrong or the bar is being missed,
 and either one makes a faster median meaningless.
 
-### The pipeline
+## The pipeline
 
 Every request runs through five phases. Trivial asks are handled on the spot but still logged;
 everything else is structured and reviewed against the goal before it ships:
@@ -48,7 +48,7 @@ through [`/tracking-spec`](.claude/skills/tracking-spec/SKILL.md), which stops a
 proposed metric must feed a KPI row or a named decision, or it goes back to be sharpened or
 dropped.
 
-### The compounding loop
+## The compounding loop
 
 The fifth phase serves the next request instead of the current one:
 
