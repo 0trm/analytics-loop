@@ -1,7 +1,7 @@
 > This is the real `CLAUDE.md` of a production analytics repo, sanitized: the company is "a
 > startup", ids are placeholders, and event names were relabeled. The structure and the rules
-> are exactly what runs. The `docs/` tree it maps stayed at work; the [README](README.md)
-> explains what each part holds so you can build your own.
+> are exactly what runs. The `docs/` tree it maps stayed at work; the Map below says what each
+> part holds so you can build your own, and the [README](README.md) explains how the parts run.
 
 # analytics
 
