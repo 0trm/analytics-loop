@@ -51,7 +51,7 @@ Two additions specific to exploration:
 
 - **Verify freshness, do not assume it.** Confirm the real maximum shard with
   `bq ls analytics_XXXXXXXXX` (free, metadata only) rather than assuming yesterday's floor still
-  holds today. A failed export adds another day of lag.
+  holds today. Early in the day it can still be D-2, and a failed export adds another day of lag.
 - **An empty result is a hypothesis, not an answer.** Before reporting "no data", check the
   param name against `docs/config/conventions.md`, check all three value types, and check the
   event was alive in that window. Most empty results here are naming assumptions.

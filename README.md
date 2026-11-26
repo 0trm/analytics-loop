@@ -29,9 +29,10 @@ Four dashed loops, each cheaper than the one after it:
 1. **Sharpen the ask, at intake.** [`/clarify`](.claude/skills/clarify/SKILL.md) checks what the
    data can actually answer and drafts the questions - including the one that collapses the rest:
    what decision will the answer change. A correction here is free.
-2. **A QA FAIL returns to the session.** The [`qa`](.claude/agents/qa.md) agent re-derives every
-   result from the brief by its own route before a human sees it; two routes agreeing is evidence,
-   one route re-read twice is not. For instrumentation,
+2. **A QA FAIL returns to the session.** The
+   [`quality-check`](.claude/agents/quality-check.md) agent re-derives every result from the brief
+   by its own route before a human sees it; two routes agreeing is evidence, one route re-read
+   twice is not. For instrumentation,
    [`tracking-qa`](.claude/agents/tracking-qa.md) drives a real browser against the spec instead. A
    FAIL costs a session iteration, not a delivery.
 3. **Human review reframes, last.** It lands on work that already passed QA, so it is a direction

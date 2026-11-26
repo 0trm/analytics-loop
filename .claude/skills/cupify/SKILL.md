@@ -127,7 +127,7 @@ _TODO: no decision named_ rather than inventing one.}
 {each "Clarify" next step, to resolve first from code, data or the live page. Empty if none.}
 ```
 
-The execution session and the `qa` agent both read it, so the definition of done must be
+The execution session and the `quality-check` agent both read it, so the definition of done must be
 checkable. "Analyze form performance" is not; "submits per form per week for Q2, spam excluded,
 sessions not events" is.
 
