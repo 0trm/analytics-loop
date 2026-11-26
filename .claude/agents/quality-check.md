@@ -1,5 +1,5 @@
 ---
-name: qa
+name: quality-check
 description: Independent correctness gate for analytics results - a number, a query, a report page, a dashboard tile. Use before anything reaches a stakeholder. It re-derives the result by its own route rather than reading along, and returns PASS or FAIL with reasons. Read-only apart from re-running queries; it never edits or fixes. Give it the task brief and the work to certify. For verifying a tracking implementation against a live page, use `tracking-qa` instead - that one drives a browser.
 tools: Bash, Read, Grep, Glob
 model: inherit

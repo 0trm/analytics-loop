@@ -25,9 +25,9 @@ analytics work happens here.
 | Per-task scratch | `wip/` (gitignored, never commit) |
 
 Procedures are skills: `/clarify` `/cupify` `/report` `/tracking-spec` `/capture` `/promote`.
-Send heavy BigQuery exploration to the `bq-explore` agent and correctness checks to `qa`, so
-schema dumps and failed queries stay out of this session. Verifying an instrumentation against a
-live page is `tracking-qa`, which drives a browser.
+Send heavy BigQuery exploration to the `bq-explore` agent and correctness checks to
+`quality-check`, so schema dumps and failed queries stay out of this session. Verifying an
+instrumentation against a live page is `tracking-qa`, which drives a browser.
 
 ## Traps
 
